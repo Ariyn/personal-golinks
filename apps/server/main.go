@@ -13,17 +13,6 @@ import (
 )
 
 const RoutingBucketName = "routing"
-const (
-	RouteKeyAdd    = "/add"
-	RouteKeyUpdate = "/update"
-	RouteKeyList   = "/list"
-)
-
-var preservedKeys = map[string]bool{
-	RouteKeyUpdate: true,
-	RouteKeyAdd:    true,
-	RouteKeyList:   true,
-}
 
 type AddRequestBody struct {
 	Name string
@@ -113,7 +102,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = router.Post("/add", func(writer http.ResponseWriter, request *http.Request) (err error) {
+	err = router.Post("/", func(writer http.ResponseWriter, request *http.Request) (err error) {
 		defer request.Body.Close()
 		b, err := io.ReadAll(request.Body)
 		if err != nil {
@@ -125,8 +114,8 @@ func main() {
 			return
 		}
 
-		if _, isPreservedKey := preservedKeys[name]; isPreservedKey {
-			return fmt.Errorf("preserved key: %s", name)
+		if name == "/" || name == "" {
+			return fmt.Errorf("you can't add to root")
 		}
 
 		err = saveToDB(db, name, url)
@@ -147,7 +136,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = router.Get("/list", func(writer http.ResponseWriter, request *http.Request) error {
+	err = router.Get("/", func(writer http.ResponseWriter, request *http.Request) error {
 		routeList := make([]string, 0)
 		for _, r := range router.Routings {
 			routeList = append(routeList, fmt.Sprintf("%s: %s", r.Method, r.Path))
@@ -169,7 +158,15 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = router.Post("/update", func(writer http.ResponseWriter, request *http.Request) error {
+	err = router.Put("/", func(writer http.ResponseWriter, request *http.Request) error {
+		http.Error(writer, "not implemented yet", http.StatusTeapot)
+		return nil
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = router.Delete("/", func(writer http.ResponseWriter, request *http.Request) error {
 		http.Error(writer, "not implemented yet", http.StatusTeapot)
 		return nil
 	})

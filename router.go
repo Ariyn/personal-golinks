@@ -2,6 +2,7 @@ package golinks
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -30,7 +31,7 @@ func (r *Router) AddRouting(path string, method string, function func(http.Respo
 		path = "/" + path
 	}
 
-	if path[len(path)-1] == '/' {
+	if path[len(path)-1] == '/' && path != "/" {
 		path = path[:len(path)-1]
 	}
 
@@ -51,6 +52,14 @@ func (r *Router) Post(path string, function func(http.ResponseWriter, *http.Requ
 	return r.AddRouting(path, http.MethodPost, function)
 }
 
+func (r *Router) Put(path string, function func(http.ResponseWriter, *http.Request) error) (err error) {
+	return r.AddRouting(path, http.MethodPut, function)
+}
+
+func (r *Router) Delete(path string, function func(http.ResponseWriter, *http.Request) error) (err error) {
+	return r.AddRouting(path, http.MethodDelete, function)
+}
+
 func (r *Router) Redirect(path string, url string) (err error) {
 	return r.Get(path, func(writer http.ResponseWriter, request *http.Request) error {
 		http.Redirect(writer, request, url, http.StatusSeeOther)
@@ -63,6 +72,8 @@ func (r *Router) Route(writer http.ResponseWriter, request *http.Request) {
 
 	method := request.Method
 	path := request.URL.Path
+
+	log.Printf("[%s] %s", method, path)
 	for _, route := range r.Routings {
 		if path == route.Path {
 			pathFound = true
