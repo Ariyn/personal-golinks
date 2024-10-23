@@ -57,12 +57,12 @@ func init() {
 func parseUrlAndBody(b []byte) (name, url string, err error) {
 	var body AddRequestBody
 	err = json.Unmarshal(b, &body)
-	if err != nil {
-		return
-	}
+	if err == nil {
+		if body.Name != "" && body.Url != "" {
+			return body.Name, body.Url, nil
+		}
 
-	if body.Name != "" && body.Url != "" {
-		return body.Name, body.Url, nil
+		return
 	}
 
 	twoLines := strings.Split(string(b), "\n")
