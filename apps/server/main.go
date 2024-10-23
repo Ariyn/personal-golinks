@@ -65,6 +65,25 @@ func init() {
 	}
 }
 
+func parseUrlAndBody(b []byte) (name, url string, err error) {
+	var body AddRequestBody
+	err = json.Unmarshal(b, &body)
+	if err != nil {
+		return
+	}
+
+	if body.Name != "" && body.Url != "" {
+		return body.Name, body.Url, nil
+	}
+
+	twoLines := strings.Split(string(b), "\n")
+	if len(twoLines) == 2 {
+		return twoLines[0], twoLines[1], nil
+	}
+
+	return "", "", fmt.Errorf("unidentified format")
+}
+
 func saveToDB(db *bolt.DB, name, url string) (err error) {
 	tx, err := db.Begin(true)
 	if err != nil {
@@ -101,14 +120,11 @@ func main() {
 			return
 		}
 
-		var body AddRequestBody
-		err = json.Unmarshal(b, &body)
+		name, url, err := parseUrlAndBody(b)
 		if err != nil {
 			return
 		}
 
-		name := body.Name
-		url := body.Url
 		if _, isPreservedKey := preservedKeys[name]; isPreservedKey {
 			return fmt.Errorf("preserved key: %s", name)
 		}
